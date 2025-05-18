@@ -4,6 +4,7 @@ import requests
 import time
 import json
 import os
+from app.gemini import get_gemini_response
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -81,7 +82,7 @@ def webhook():
                 send_message(chat_id, r)
 
             elif tool == 'Gemini':
-                r = 'This is a test response from Gemini'
+                r = get_gemini_response(q)
                 send_message(chat_id, r)
 
             elif tool == 'SD':
