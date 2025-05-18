@@ -47,10 +47,6 @@ def webhook():
             chat_id = isMessage['chat']['id']
             q = isMessage['text']
 
-            if users_dict.get(chat_id, {}).get('status', '') != 'start':
-                send_message(chat_id, 'Please enter /start to start a session')
-                return jsonify({'action': 'ask_start', 'status': 'success'})
-
             if q == '/start' or not users_dict.get(chat_id, {}).get('callback_data', {}):
                 users_dict[chat_id] = {'callback_data': None, 'status': 'start'}
                 welcome_reply_markup = {
@@ -64,6 +60,10 @@ def webhook():
                 welcome_text = 'Welcome to the Multimodal Chatbot! Please choose a chatbot/tool:'
                 send_message(chat_id, welcome_text, welcome_reply_markup)
                 return jsonify({'action': 'welcome', 'status': 'success'})
+            
+            if users_dict.get(chat_id, {}).get('status', '') != 'start':
+                send_message(chat_id, 'Please enter /start to start a session')
+                return jsonify({'action': 'ask_start', 'status': 'success'})
             
             if q == '/end':
                 users_dict[chat_id]['callback_data'] = None
