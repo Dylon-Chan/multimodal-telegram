@@ -66,7 +66,7 @@ def webhook():
                 send_message(chat_id, 'Bye and see you again! [Enter "/start" to start a session]')
                 return jsonify({'action': 'exit', 'status': 'success'})
             
-            tool = users_dict['chat_id']['callback_data']
+            tool = users_dict[chat_id]['callback_data']
 
             if tool == 'DeepSeek':
                 r = 'This is a test response from DeepSeek'
@@ -87,6 +87,25 @@ def webhook():
             return jsonify({'action': 'reply_message', 'status': 'success'})
         
     return jsonify({'status': 'error', 'message': 'Invalid request'})
+
+@app.route('/setup_webhook', methods=['GET'])
+def setup_webhook():
+    webhook_url = request.args.get('url')
+    if not webhook_url:
+        return jsonify({'status': 'error', 'message': 'No webhook URL provided'})
+    data = {'url': webhook_url}
+    response = request.post(base_url + 'setWebhook', json=data)
+    return jsonify(response.json())
+
+@app.route('/get_webhook_info', methods=['GET'])
+def get_webhook_info():
+    response = requests.get(base_url + 'getWebhookInfo')
+    return jsonify(response.json())
+
+@app.route('/delete_webhook', methods=['GET'])
+def delete_webhook():
+    response = requests.get(base_url + 'deleteWebhook')
+    return jsonify(response.json())
 
 if __name__ == '__main__':
     app.run(debug=True)
