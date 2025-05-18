@@ -15,7 +15,6 @@ users_dict = {}
 
 def send_message(id, text, reply_markup=None):
     data = {'chat_id': id, 'text': text}
-    tool_response = requests.post(base_url + 'sendMessage', data=data)
     if reply_markup:
         data['reply_markup'] = json.dumps(reply_markup)
     response = requests.post(base_url + 'sendMessage', json=data)
@@ -94,7 +93,7 @@ def setup_webhook():
     if not webhook_url:
         return jsonify({'status': 'error', 'message': 'No webhook URL provided'})
     data = {'url': webhook_url}
-    response = request.post(base_url + 'setWebhook', json=data)
+    response = requests.post(base_url + 'setWebhook', json=data)
     return jsonify(response.json())
 
 @app.route('/get_webhook_info', methods=['GET'])
