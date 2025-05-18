@@ -1,0 +1,92 @@
+from flask import Flask, request, jsonify
+from config import Config
+import requests
+import time
+import json
+import os
+
+app = Flask(__name__)
+app.config.from_object(Config)
+
+telegram_api_key = Config.TELEGRAM_API_KEY
+base_url = f'https://api.telegram.org/bot{telegram_api_key}/'
+
+users_dict = {}
+
+def send_message(id, text, reply_markup=None):
+    data = {'chat_id': id, 'text': text}
+    tool_response = requests.post(base_url + 'sendMessage', data=data)
+    if reply_markup:
+        data['reply_markup'] = json.dumps(reply_markup)
+    response = requests.post(base_url + 'sendMessage', json=data)
+    return response.json()
+
+@app.route('/')
+def index():
+    return "Telegram Bot Webhook Server is running!"
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    if request.method == 'POST':
+        update = request.get_json()
+        isMessage = update.get('message', {})
+        isCallback = update.get('callback_query', {})
+
+        if isCallback:
+            chat_id = isCallback['message']['chat']['id']
+            callback_data = isCallback['data']
+            users_dict[chat_id]['callback_data'] = callback_data
+            if callback_data == 'SD':
+                text = f'What image would you like to generate? [Enter "main" for back to main page and "exit" to end]'
+            else:
+                text = f'Hi, I am your {callback_data} chatbot. How can I help you today? [Enter "main" for back to main page and "exit" to end]'
+            send_message(chat_id, text)
+            return jsonify({'action': 'select_tool', 'status': 'success'})
+        
+        if isMessage:
+            chat_id = isMessage['chat']['id']
+            q = isMessage['text']
+
+            if q == '/start' or not users_dict.get(chat_id, {}).get('callback_data', {}):
+                users_dict[chat_id] = {'callback_data': None}
+                welcome_reply_markup = {
+                    'inline_keyboard': [
+                        [{'text': 'Chat with DeepSeek', 'callback_data': 'DeepSeek'},
+                        {'text': 'Chat with Sea-Lion', 'callback_data': 'Sea-Lion'}],
+                        [{'text': 'Chat with Gemini', 'callback_data': 'Gemini'},
+                        {'text': 'Image generator with Stable Diffusion', 'callback_data': 'SD'}]
+                    ]
+                }
+                welcome_text = 'Welcome to the Multimodal Chatbot! Please choose a chatbot/tool:'
+                send_message(chat_id, welcome_text, welcome_reply_markup)
+                return jsonify({'action': 'welcome', 'status': 'success'})
+            
+            if q == 'exit':
+                users_dict[chat_id]['callback_data'] = None
+                send_message(chat_id, 'Bye and see you again! [Enter "/start" to start a session]')
+                return jsonify({'action': 'exit', 'status': 'success'})
+            
+            tool = users_dict['chat_id']['callback_data']
+
+            if tool == 'DeepSeek':
+                r = 'This is a test response from DeepSeek'
+                send_message(chat_id, r)
+
+            elif tool == 'Sea-Lion':
+                r = 'This is a test response from Sea-Lion'
+                send_message(chat_id, r)
+
+            elif tool == 'Gemini':
+                r = 'This is a test response from Gemini'
+                send_message(chat_id, r)
+
+            elif tool == 'SD':
+                r = 'This is a test response from Stable Diffusion'
+                send_message(chat_id, r)
+
+            return jsonify({'action': 'reply_message', 'status': 'success'})
+        
+    return jsonify({'status': 'error', 'message': 'Invalid request'})
+
+if __name__ == '__main__':
+    app.run(debug=True)
