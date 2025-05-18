@@ -36,9 +36,9 @@ def webhook():
             callback_data = isCallback['data']
             users_dict[chat_id]['callback_data'] = callback_data
             if callback_data == 'SD':
-                text = f'What image would you like to generate? [Enter "main" for back to main page and "exit" to end]'
+                text = f'What image would you like to generate? [Enter /end to end]'
             else:
-                text = f'Hi, I am your {callback_data} chatbot. How can I help you today? [Enter "main" for back to main page and "exit" to end]'
+                text = f'Hi, I am your {callback_data} chatbot. How can I help you today? [Enter /end to end]'
             send_message(chat_id, text)
             return jsonify({'action': 'select_tool', 'status': 'success'})
         
@@ -46,8 +46,12 @@ def webhook():
             chat_id = isMessage['chat']['id']
             q = isMessage['text']
 
+            if users_dict.get(chat_id, {}).get('status', '') != 'start':
+                send_message(chat_id, 'Please enter /start to start a session')
+                return jsonify({'action': 'ask_start', 'status': 'success'})
+
             if q == '/start' or not users_dict.get(chat_id, {}).get('callback_data', {}):
-                users_dict[chat_id] = {'callback_data': None}
+                users_dict[chat_id] = {'callback_data': None, 'status': 'start'}
                 welcome_reply_markup = {
                     'inline_keyboard': [
                         [{'text': 'Chat with DeepSeek', 'callback_data': 'DeepSeek'},
@@ -60,9 +64,10 @@ def webhook():
                 send_message(chat_id, welcome_text, welcome_reply_markup)
                 return jsonify({'action': 'welcome', 'status': 'success'})
             
-            if q == 'exit':
+            if q == '/end':
                 users_dict[chat_id]['callback_data'] = None
-                send_message(chat_id, 'Bye and see you again! [Enter "/start" to start a session]')
+                users_dict[chat_id]['status'] = 'end'
+                send_message(chat_id, 'Bye and see you again! [Enter /start to start a session]')
                 return jsonify({'action': 'exit', 'status': 'success'})
             
             tool = users_dict[chat_id]['callback_data']
