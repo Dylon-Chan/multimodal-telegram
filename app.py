@@ -4,7 +4,7 @@ import requests
 import time
 import json
 import os
-from app.gemini import get_gemini_response
+from apps.gemini import get_gemini_response
 
 app = Flask(__name__)
 app.config.from_object(Config)
