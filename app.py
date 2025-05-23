@@ -115,7 +115,7 @@ def webhook():
             elif tool == 'Financial':
                 try:
                     r = get_gemini_response(q)
-                    if r.text:
+                    if r:
                         send_message(chat_id, r)
                     else:
                         send_message(chat_id, "Gemini returned no response.")
