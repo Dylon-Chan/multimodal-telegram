@@ -130,6 +130,7 @@ def webhook():
                 return jsonify({'action': 'exit', 'status': 'success'})
             
             tool = users_dict[chat_id]['callback_data']
+            print(f'User {chat_id} is using tool: {tool}')
 
             if tool == 'DeepSeek':
                 r = 'This is a test response from DeepSeek'
