@@ -5,6 +5,8 @@ import time
 import json
 import os
 from apps.gemini import get_gemini_response
+from io import StringIO
+import pandas as pd
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -45,7 +47,28 @@ def webhook():
         
         if isMessage:
             chat_id = isMessage['chat']['id']
-            q = isMessage['text']
+            file_upload = isMessage.get('document','')
+            q = isMessage.get('text','')
+
+            if file_upload:
+                caption = isMessage.get('caption','')
+                if not caption:
+                    file_err_message = requests.get(base_url + f'sendMessage?chat_id={chat_id}&text=Please enter the your prompt in the caption when uploading a file!')
+                    return jsonify({'error': 'no caption', 'status': 'error'})
+                if file_upload['mime_type'] != 'text/csv':
+                    file_err_message = requests.get(base_url + f'sendMessage?chat_id={chat_id}&text=I am sorry that I can only accept CSV file now. Please re-upload a CSV file.')
+                    return jsonify({'error': 'not csv', 'status': 'error'})
+                file_id = file_upload['file_id']
+                get_file = requests.get(base_url + f'getFile?file_id={file_id}')
+                file_path = get_file.json()['result']['file_path']
+                download_file = requests.get(f'https://api.telegram.org/file/bot{telegram_api_key}/{file_path}')
+                df = pd.read_csv(StringIO(download_file.text))
+                file_text = df.to_string(index=False)
+                q = f'''
+                {file_text}
+
+                {caption}
+                '''
 
             if q == '/start' or not users_dict.get(chat_id, {}).get('callback_data', {}):
                 users_dict[chat_id] = {'callback_data': None, 'status': 'start'}
@@ -54,7 +77,8 @@ def webhook():
                         [{'text': 'Chat with DeepSeek', 'callback_data': 'DeepSeek'},
                         {'text': 'Chat with Sea-Lion', 'callback_data': 'Sea-Lion'}],
                         [{'text': 'Chat with Gemini', 'callback_data': 'Gemini'},
-                        {'text': 'Image generator with Stable Diffusion', 'callback_data': 'SD'}]
+                        {'text': 'Financial Advisor', 'callback_data': 'Financial'}],
+                        [{'text': 'Image generator with Stable Diffusion', 'callback_data': 'SD'}]
                     ]
                 }
                 welcome_text = 'Welcome to the Multimodal Chatbot! Please choose a chatbot/tool:'
@@ -88,6 +112,16 @@ def webhook():
             elif tool == 'SD':
                 r = 'This is a test response from Stable Diffusion'
                 send_message(chat_id, r)
+
+            elif tool == 'Financial':
+                try:
+                    r = get_gemini_response(q)
+                    if r.text:
+                        send_message(chat_id, r.text)
+                    else:
+                        send_message(chat_id, "Gemini returned no response.")
+                except Exception as e:
+                    send_message(chat_id, f"Gemini error: {str(e)}")
 
             return jsonify({'action': 'reply_message', 'status': 'success'})
         
