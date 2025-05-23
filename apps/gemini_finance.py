@@ -32,12 +32,16 @@ def gemini_finance_response(prompt):
         income_stmt = t.financials
         balance_sheet = t.balance_sheet
         cash_flow = t.cashflow
+
+        def format_data(df):
+            df.columns = df.columns.strftime('%Y-%m-%d')
+            return df.to_json(orient='columns')
         
         return {
             'company_name': company_name,
-            'income_statement': income_stmt,
-            'balance_sheet': balance_sheet,
-            'cash_flow': cash_flow
+            'income_statement': format_data(income_stmt),
+            'balance_sheet': format_data(balance_sheet),
+            'cash_flow': format_data(cash_flow)
         }
 
     # Configure the client and tools
