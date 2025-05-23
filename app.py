@@ -64,7 +64,17 @@ def webhook():
             callback_data = isCallback['data']
             users_dict[chat_id]['callback_data'] = callback_data
             if callback_data == 'SD':
-                text = f'What image would you like to generate? [Enter /end to end]'
+                text = f'Welcome to the Stable Diffusion Image Generator! I can help you create amazing images from your text descriptions. Just tell me what you\'d like to see, and I\'ll generate it for you. [Enter /end to end]'
+            elif callback_data == 'DeepSeek':
+                text = f'Welcome to DeepSeek Chat! I\'m your advanced AI assistant powered by DeepSeek. I can help you with various tasks, answer questions, and engage in meaningful conversations. How can I assist you today? [Enter /end to end]'
+            elif callback_data == 'Sea-Lion':
+                text = f'Welcome to Sea-Lion Chat! I\'m your friendly AI companion powered by Sea-Lion. I\'m here to help you with your questions and tasks. What would you like to discuss? [Enter /end to end]'
+            elif callback_data == 'Gemini':
+                text = f'Welcome to Gemini Chat! I\'m powered by Google\'s Gemini model, ready to help you with a wide range of tasks. I can assist with information, analysis, and creative tasks. How can I help you today? [Enter /end to end]'
+            elif callback_data == 'Finance':
+                text = f'Welcome to the Financial Advisor! I\'m here to help you with financial analysis, market insights, and investment advice. I can analyze the financial data based on the listed companies financial statements (e.g. balance sheet, income statement, cash flow statement), and answer your financial questions. What would you like to know? [Enter /end to end]'
+            elif callback_data == 'FileUpload':
+                text = f'Welcome to the File Analysis Tool! I can help you analyze and understand your files (currently only CSV files are supported). Simply upload your CSV file with a caption describing what you\'d like to know, and I\'ll provide insights based on the data. [Enter /end to end]'
             else:
                 text = f'Hi, I am your {callback_data} chatbot. How can I help you today? [Enter /end to end]'
             send_message(chat_id, text)
