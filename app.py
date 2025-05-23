@@ -64,11 +64,7 @@ def webhook():
                 download_file = requests.get(f'https://api.telegram.org/file/bot{telegram_api_key}/{file_path}')
                 df = pd.read_csv(StringIO(download_file.text))
                 file_text = df.to_string(index=False)
-                q = f'''
-                {file_text}
-
-                {caption}
-                '''
+                q = f'{file_text}\n\n{caption}'
 
             if q == '/start' or not users_dict.get(chat_id, {}).get('callback_data', {}):
                 users_dict[chat_id] = {'callback_data': None, 'status': 'start'}
