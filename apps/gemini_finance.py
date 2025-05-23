@@ -8,13 +8,13 @@ def gemini_finance_response(prompt):
     # Define the function declaration for the model
     get_financial_info_function = {
         "name": "get_financial_info",
-        "description": "Retrieve financial data such as income statements, balance sheets and cashflow using the ticker symbol.",
+        "description": "Retrieve annual financial statements including income statements, balance sheets, and cash flow statements from Yahoo Finance using a company's ticker symbol.",
         "parameters": {
             "type": "object",
             "properties": {
                 "ticker": {
                     "type": "string",
-                    "description": "Ticker symbol of a company (e.g., 'NVDA' for NVIDIA company)",
+                    "description": "Stock ticker symbol of a publicly traded company (e.g., 'NVDA' for NVIDIA, 'AAPL' for Apple Inc., 'MSFT' for Microsoft). Must be a valid ticker symbol listed on major stock exchanges.",
                 },
             },
             "required": ["ticker"],
@@ -23,15 +23,21 @@ def gemini_finance_response(prompt):
 
     def get_financial_info(ticker):
         t = yf.Ticker(ticker)
+        
+        # Get company info
+        info = t.info
+        company_name = info.get('longName', ticker)
+        
+        # Get financial statements
         income_stmt = t.financials
         balance_sheet = t.balance_sheet
         cash_flow = t.cashflow
         
-        # Format the data with proper headers and index
         return {
-            'income_statement': income_stmt.to_string(),
-            'balance_sheet': balance_sheet.to_string(),
-            'cash_flow': cash_flow.to_string()
+            'company_name': company_name,
+            'income_statement': income_stmt,
+            'balance_sheet': balance_sheet,
+            'cash_flow': cash_flow
         }
 
     # Configure the client and tools
@@ -65,7 +71,7 @@ def gemini_finance_response(prompt):
 
     if tool_call.name == "get_financial_info":
         result = get_financial_info(**tool_call.args)
-        print(f"Function execution result: ok")
+        print(f"Financial data result: {result}")
 
     # Create a function response part
     function_response_part = types.Part.from_function_response(
