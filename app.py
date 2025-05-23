@@ -56,10 +56,10 @@ def webhook():
             if file_upload:
                 caption = isMessage.get('caption','')
                 if not caption:
-                    file_err_message = requests.get(base_url + f'sendMessage?chat_id={chat_id}&text=Please enter the your prompt in the caption when uploading a file!')
+                    send_message(chat_id, 'Please enter the your prompt in the caption when uploading a file!')
                     return jsonify({'error': 'no caption', 'status': 'error'})
                 if file_upload['mime_type'] != 'text/csv':
-                    file_err_message = requests.get(base_url + f'sendMessage?chat_id={chat_id}&text=I am sorry that I can only accept CSV file now. Please re-upload a CSV file.')
+                    send_message(chat_id, 'I am sorry that I can only accept CSV file now. Please re-upload a CSV file.')
                     return jsonify({'error': 'not csv', 'status': 'error'})
                 file_id = file_upload['file_id']
                 get_file = requests.get(base_url + f'getFile?file_id={file_id}')
