@@ -17,10 +17,31 @@ base_url = f'https://api.telegram.org/bot{telegram_api_key}/'
 users_dict = {}
 
 def send_message(id, text, reply_markup=None):
-    data = {'chat_id': id, 'text': text}
-    if reply_markup:
-        data['reply_markup'] = json.dumps(reply_markup)
-    response = requests.post(base_url + 'sendMessage', json=data)
+    MAX_MESSAGE_LENGTH = 4096
+    data = {'chat_id': id}
+    
+    if len(text) <= MAX_MESSAGE_LENGTH:
+        if reply_markup:
+            data['reply_markup'] = json.dumps(reply_markup)
+        data['text'] = text
+        response = requests.post(base_url + 'sendMessage', json=data)
+    else:
+        paragraphs = text.split('\n\n')
+        current_chunk = ''
+
+        for p in paragraphs:
+            if len(current_chunk + p + '\n\n') > MAX_MESSAGE_LENGTH and current_chunk:
+                data['text'] = current_chunk.strip()
+                response = requests.post(base_url + 'sendMessage', json=data)
+
+                current_chunk = p + '\n\n'
+                time.sleep(1)
+            else:
+                current_chunk += p + '\n\n'
+            
+        if current_chunk.strip():
+            data['text'] = current_chunk.strip()
+            response = requests.post(base_url + 'sendMessage', json=data)
     return response.json()
 
 @app.route('/')
@@ -113,14 +134,8 @@ def webhook():
                 send_message(chat_id, r)
 
             elif tool == 'Financial':
-                try:
-                    r = get_gemini_response(q)
-                    if r:
-                        send_message(chat_id, r)
-                    else:
-                        send_message(chat_id, "Gemini returned no response.")
-                except Exception as e:
-                    send_message(chat_id, f"Gemini error: {str(e)}")
+                r = get_gemini_response(q)
+                send_message(chat_id, r)
 
             return jsonify({'action': 'reply_message', 'status': 'success'})
         
