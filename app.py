@@ -75,7 +75,10 @@ def webhook():
             file_upload = isMessage.get('document','')
             q = isMessage.get('text','')
 
-            if file_upload and tool == 'FileUpload':
+            if file_upload:
+                if tool != 'FileUpload':
+                    send_message(chat_id, 'I am sorry that this model does not support file upload yet. Please try again with another tool.')
+                    return jsonify({'error': 'no file upload', 'status': 'error'})
                 caption = isMessage.get('caption','')
                 if not caption:
                     send_message(chat_id, 'Please enter the your prompt in the caption when uploading a file!')
@@ -90,10 +93,7 @@ def webhook():
                 df = pd.read_csv(StringIO(download_file.text))
                 file_text = df.to_string(index=False)
                 q = f'{file_text}\n\n{caption}'
-            else:
-                send_message(chat_id, 'I am sorry that this model does not support file upload yet.')
-                return jsonify({'error': 'no file upload', 'status': 'error'})
-
+                
             if q == '/start' or not users_dict.get(chat_id, {}).get('callback_data', {}):
                 users_dict[chat_id] = {'callback_data': None, 'status': 'start'}
                 welcome_reply_markup = {
