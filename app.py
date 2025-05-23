@@ -116,7 +116,7 @@ def webhook():
                 try:
                     r = get_gemini_response(q)
                     if r.text:
-                        send_message(chat_id, r.text)
+                        send_message(chat_id, r)
                     else:
                         send_message(chat_id, "Gemini returned no response.")
                 except Exception as e:
@@ -126,6 +126,7 @@ def webhook():
         
     return jsonify({'status': 'error', 'message': 'Invalid request'})
 
+# setup webhook by visiting the url (e.g. https://your-domain.com/setup_webhook?url=https://your-domain.com/webhook)
 @app.route('/setup_webhook', methods=['GET'])
 def setup_webhook():
     webhook_url = request.args.get('url')
