@@ -5,6 +5,7 @@ import time
 import json
 import os
 from apps.gemini import get_gemini_response
+from apps.gemini_finance import gemini_finance_response
 from io import StringIO
 import pandas as pd
 
@@ -74,7 +75,7 @@ def webhook():
             file_upload = isMessage.get('document','')
             q = isMessage.get('text','')
 
-            if file_upload:
+            if file_upload and tool == 'FileUpload':
                 caption = isMessage.get('caption','')
                 if not caption:
                     send_message(chat_id, 'Please enter the your prompt in the caption when uploading a file!')
@@ -89,6 +90,9 @@ def webhook():
                 df = pd.read_csv(StringIO(download_file.text))
                 file_text = df.to_string(index=False)
                 q = f'{file_text}\n\n{caption}'
+            else:
+                send_message(chat_id, 'I am sorry that this model does not support file upload yet.')
+                return jsonify({'error': 'no file upload', 'status': 'error'})
 
             if q == '/start' or not users_dict.get(chat_id, {}).get('callback_data', {}):
                 users_dict[chat_id] = {'callback_data': None, 'status': 'start'}
@@ -97,8 +101,8 @@ def webhook():
                         [{'text': 'Chat with DeepSeek', 'callback_data': 'DeepSeek'},
                         {'text': 'Chat with Sea-Lion', 'callback_data': 'Sea-Lion'}],
                         [{'text': 'Chat with Gemini', 'callback_data': 'Gemini'},
-                        {'text': 'Financial Advisor', 'callback_data': 'Financial'}],
-                        [{'text': 'Image generator with Stable Diffusion', 'callback_data': 'SD'}]
+                        {'text': 'Financial Advisor', 'callback_data': 'Finance'}],
+                        [{'text': 'Chatbot with File Upload', 'callback_data': 'FileUpload'}]
                     ]
                 }
                 welcome_text = 'Welcome to the Multimodal Chatbot! Please choose a chatbot/tool:'
@@ -133,8 +137,12 @@ def webhook():
                 r = 'This is a test response from Stable Diffusion'
                 send_message(chat_id, r)
 
-            elif tool == 'Financial':
+            elif tool == 'FileUpload':
                 r = get_gemini_response(q)
+                send_message(chat_id, r)
+
+            elif tool == 'Finance':
+                r = gemini_finance_response(q)
                 send_message(chat_id, r)
 
             return jsonify({'action': 'reply_message', 'status': 'success'})
