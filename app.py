@@ -27,8 +27,11 @@ def send_message(id, text, reply_markup=None):
 def index():
     return "Telegram Bot Webhook Server is running!"
 
-@app.route('/webhook', methods=['POST'])
+@app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
+    if request.method == 'GET':
+        return jsonify({'status': 'ok', 'message': 'Webhook is active'})
+        
     if request.method == 'POST':
         update = request.get_json()
         isMessage = update.get('message', {})
