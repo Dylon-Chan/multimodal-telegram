@@ -49,7 +49,7 @@ def gemini_finance_response(prompt):
     # Send request with function declarations
     contents = [
         types.Content(
-            role="user", parts=[types.Part(text="Provide financial insights for the company GlobalFoundries")]
+            role="user", parts=[types.Part(text=prompt)]
         )
     ]
     response = client.models.generate_content(
