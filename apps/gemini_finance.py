@@ -8,28 +8,13 @@ def gemini_finance_response(prompt):
     # Define the function declaration for the model
     get_financial_info_function = {
         "name": "get_financial_info",
-        "description": "Retrieve annual financial statements including income statements, balance sheets, and cash flow statements from Yahoo Finance using a company's ticker symbol.",
+        "description": "Retrieve latest/current stock price and financial data such as income statements, balance sheets and cashflow using the ticker symbol.",
         "parameters": {
             "type": "object",
             "properties": {
                 "ticker": {
                     "type": "string",
                     "description": "Stock ticker symbol of a publicly traded company (e.g., 'NVDA' for NVIDIA, 'AAPL' for Apple Inc., 'MSFT' for Microsoft). Must be a valid ticker symbol listed on major stock exchanges.",
-                },
-            },
-            "required": ["ticker"],
-        },
-    }
-
-    get_stock_price_function = {
-        "name": "get_stock_price",
-        "description": "Retrieve the current stock price of a publicly traded company using a company's ticker symbol.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "ticker": {
-                    "type": "string", 
-                    "description": "Stock ticker symbol of a publicly traded company (e.g., 'NVDA' for NVIDIA, 'AAPL' for Apple Inc., 'MSFT' for Microsoft). Must be a valid ticker symbol listed on major stock exchanges."
                 },
             },
             "required": ["ticker"],
@@ -54,6 +39,7 @@ def gemini_finance_response(prompt):
         
         return {
             'company_name': company_name,
+            'current_price': t.info.get('currentPrice', 'Not Available'),
             'income_statement': format_data(income_stmt),
             'balance_sheet': format_data(balance_sheet),
             'cash_flow': format_data(cash_flow)
@@ -66,7 +52,7 @@ def gemini_finance_response(prompt):
     ]
     config = {
         "tools": finance_tools,
-        "automatic_function_calling": {"disable": True},
+        "automatic_function_calling": True,
         # Force the model to call 'any' function, instead of chatting.
         "tool_config": {"function_calling_config": {"mode": "any"}},
     }
