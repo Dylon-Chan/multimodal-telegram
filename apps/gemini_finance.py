@@ -21,6 +21,21 @@ def gemini_finance_response(prompt):
         },
     }
 
+    get_stock_price_function = {
+        "name": "get_stock_price",
+        "description": "Retrieve the current stock price of a publicly traded company using a company's ticker symbol.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "ticker": {
+                    "type": "string", 
+                    "description": "Stock ticker symbol of a publicly traded company (e.g., 'NVDA' for NVIDIA, 'AAPL' for Apple Inc., 'MSFT' for Microsoft). Must be a valid ticker symbol listed on major stock exchanges."
+                },
+            },
+            "required": ["ticker"],
+        },
+    }
+
     def get_financial_info(ticker):
         t = yf.Ticker(ticker)
         
