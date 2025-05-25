@@ -5,9 +5,10 @@ import time
 import json
 import os
 from apps.gemini import get_gemini_response
-from apps.gemini_finance import gemini_finance_response
 from io import StringIO
 import pandas as pd
+import pypdf
+import tempfile
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -71,12 +72,6 @@ def webhook():
                 text = f'Welcome to Sea-Lion Chat!\n\nI\'m your friendly AI companion powered by Sea-Lion. I\'m here to help you with your questions and tasks.\n\nWhat would you like to discuss?\n\n[Enter /end to end]'
             elif callback_data == 'Gemini':
                 text = f'Welcome to Gemini Chat!\n\nI\'m powered by Google\'s Gemini model, ready to help you with a wide range of tasks. I can assist with information, analysis, and creative tasks.\n\nHow can I help you today?\n\n[Enter /end to end]'
-            elif callback_data == 'Finance':
-                text = f'Welcome to the Financial Advisor!\n\nI\'m here to help you with financial analysis, market insights, and investment advice. I can analyze the financial data based on the listed companies financial statements (e.g. balance sheet, income statement, cash flow statement), and answer your financial questions.\n\nWhat would you like to know?\n\n[Enter /end to end]'
-            elif callback_data == 'FileUpload':
-                text = f'Welcome to the File Analysis Tool!\n\nI can help you analyze and understand your files (currently only CSV files are supported). Simply upload your CSV file with a caption describing what you\'d like to know, and I\'ll provide insights based on the data.\n\n[Enter /end to end]'
-            else:
-                text = f'Hi, I am your {callback_data} chatbot. How can I help you today? [Enter /end to end]'
             send_message(chat_id, text)
             return jsonify({'action': 'select_tool', 'status': 'success'})
         
@@ -86,33 +81,45 @@ def webhook():
             q = isMessage.get('text','')
 
             if file_upload:
-                if tool != 'FileUpload':
-                    send_message(chat_id, 'I am sorry that this model does not support file upload yet. Please try again with another tool.')
-                    return jsonify({'error': 'no file upload', 'status': 'error'})
                 caption = isMessage.get('caption','')
+                file_type = file_upload['mime_type']
                 if not caption:
-                    send_message(chat_id, 'Please enter the your prompt in the caption when uploading a file!')
+                    send_message(chat_id, 'Please enter your prompt in the caption when uploading a file!')
                     return jsonify({'error': 'no caption', 'status': 'error'})
-                if file_upload['mime_type'] != 'text/csv':
-                    send_message(chat_id, 'I am sorry that I can only accept CSV file now. Please re-upload a CSV file.')
-                    return jsonify({'error': 'not csv', 'status': 'error'})
+                if file_type not in ['text/csv', 'application/vnd.ms-excel', 'application/pdf']:
+                    send_message(chat_id, 'I am sorry that I can only accept CSV, Excel, or PDF file. Please re-upload a correct file.')
+                    return jsonify({'error': 'not correct file type', 'status': 'error'})
                 file_id = file_upload['file_id']
                 get_file = requests.get(base_url + f'getFile?file_id={file_id}')
                 file_path = get_file.json()['result']['file_path']
                 download_file = requests.get(f'https://api.telegram.org/file/bot{telegram_api_key}/{file_path}')
-                df = pd.read_csv(StringIO(download_file.text))
-                file_text = df.to_string(index=False)
+                if file_upload['mime_type'] == 'text/csv':
+                    df = pd.read_csv(StringIO(download_file.text))
+                    file_text = df.to_string(index=False)
+                elif file_upload['mime_type'] == 'application/vnd.ms-excel':
+                    df = pd.read_excel(StringIO(download_file.text))
+                    file_text = df.to_string(index=False)
+                elif file_upload['mime_type'] == 'application/pdf':
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_pdf:
+                        temp_pdf.write(download_file.content)
+                        temp_pdf_path = temp_pdf.name
+                    reader = pypdf.PdfReader(temp_pdf_path)
+                    file_text = ''
+                    for p in reader.pages:
+                        txt = p.extract_text()
+                        if txt:
+                            file_text += txt + '\n'
+                    os.remove(temp_pdf_path)
                 q = f'{file_text}\n\n{caption}'
                 
             if q == '/start' or not users_dict.get(chat_id, {}).get('callback_data', {}):
                 users_dict[chat_id] = {'callback_data': None, 'status': 'start'}
                 welcome_reply_markup = {
                     'inline_keyboard': [
-                        [{'text': 'Chat with DeepSeek', 'callback_data': 'DeepSeek'},
-                        {'text': 'Chat with Sea-Lion', 'callback_data': 'Sea-Lion'}],
+                        [{'text': 'Chat with DeepSeek (dev in progress)', 'callback_data': 'DeepSeek'},
+                        {'text': 'Chat with Sea-Lion (dev in progress)', 'callback_data': 'Sea-Lion'}],
                         [{'text': 'Chat with Gemini', 'callback_data': 'Gemini'},
-                        {'text': 'Financial Advisor', 'callback_data': 'Finance'}],
-                        [{'text': 'Chatbot with File Upload', 'callback_data': 'FileUpload'}]
+                        {'text': 'Image Generator (dev in progress)', 'callback_data': 'SD'}]
                     ]
                 }
                 welcome_text = 'Welcome to the Multimodal Chatbot! Please choose a chatbot/tool:'
@@ -133,7 +140,7 @@ def webhook():
             print(f'User {chat_id} is using tool: {tool}')
 
             if tool == 'DeepSeek':
-                r = 'This is a test response from DeepSeek'
+                r = 'This is a test response from DeepSeek.'
                 send_message(chat_id, r)
 
             elif tool == 'Sea-Lion':
@@ -148,19 +155,11 @@ def webhook():
                 r = 'This is a test response from Stable Diffusion'
                 send_message(chat_id, r)
 
-            elif tool == 'FileUpload':
-                r = get_gemini_response(q)
-                send_message(chat_id, r)
-
-            elif tool == 'Finance':
-                r = gemini_finance_response(q)
-                send_message(chat_id, r)
-
             return jsonify({'action': 'reply_message', 'status': 'success'})
         
     return jsonify({'status': 'error', 'message': 'Invalid request'})
 
-# setup webhook by visiting the url (e.g. https://your-domain.com/setup_webhook?url=https://your-domain.com/webhook)
+# route to setup webhook by visiting the url (e.g. https://your-domain.com/setup_webhook?url=https://your-domain.com/webhook)
 @app.route('/setup_webhook', methods=['GET'])
 def setup_webhook():
     webhook_url = request.args.get('url')
