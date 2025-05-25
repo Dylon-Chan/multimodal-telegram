@@ -5,3 +5,4 @@ requests==2.31.0
 google-genai==1.15.0
 pandas==2.2.3
 yfinance
+pypdf==5.5.0
