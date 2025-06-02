@@ -12,9 +12,9 @@ A powerful multimodal Telegram bot that integrates multiple AI models and suppor
 - **Webhook Support**: Production-ready webhook implementation
 
 ### *In Development*
-- **DeepSeek Chat**: Advanced AI assistant (requires self-hosted deployment)
-- **Sea-Lion Chat**: Friendly AI companion (requires self-hosted deployment)  
-- **Stable Diffusion Image Generator**: Text-to-image generation (requires self-hosted deployment)
+- **DeepSeek Chat**: Advanced AI assistant (requires self-hosted deployment/API key)
+- **Sea-Lion Chat**: Friendly AI companion (requires self-hosted deployment/API key)  
+- **Stable Diffusion Image Generator**: Text-to-image generation (requires self-hosted deployment/API key)
 
 ## Overview
 
@@ -129,8 +129,8 @@ multimodal-telegram/
 
 ## Future Development
 
-### Self-Hosted Models (In Progress)
-The following models require self-hosted deployment and are currently under development:
+### Additional Models (In Progress)
+The following models require self-hosted deployment/API key and are currently under development:
 
 1. **DeepSeek**: Advanced reasoning and coding capabilities
 2. **Sea-Lion**: Southeast Asia-focused language model
@@ -146,4 +146,4 @@ These models will be integrated once self-hosting infrastructure is established.
 
 ---
 
-**Note**: This bot is actively under development. Some features marked as "in development" require additional infrastructure setup and are not yet fully functional.
+**Note**: This bot is actively under development. Some features marked as "in development" require additional infrastructure setup and API keys and are not yet fully functional.
